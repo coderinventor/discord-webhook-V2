@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>send message by webhook</title>
+    <style>
+        body {
+            background-color: #1e1e2f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            width: 90%;
+            max-width: 600px;
+            height: 90vh;
+            background: linear-gradient(145deg, #2a2a40, #1a1a2b);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .center {
+            text-align: center;
+            padding: 20px;
+        }
+
+        #webhook-setup,
+        #image-setup,
+        #name-setup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #8a85ff;
+        }
+
+        input {
+            padding: 10px;
+            border: 2px solid #555;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            font-size: 1rem;
+            background-color: #232342;
+            color: #ffffff;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #7289da;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #5b6eae;
+        }
+
+        #chat-container {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #555;
+            padding: 10px;
+            background-color: #2a2a4a;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .message-container {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px 0;
+        }
+
+        .message-container img {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .message {
+            padding: 10px;
+            background-color: #3a3a5a;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #8a85ff;
+        }
+
+        .message img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        #message-input {
+            display: flex;
+            padding: 10px;
+            background-color: #232342;
+            border-top: 1px solid #555;
+            border-radius: 10px;
+            position: sticky;
+            bottom: 0;
+        }
+
+        #message-input input[type="text"] {
+            width: 60%;
+            padding: 10px;
+            border: 2px solid #555;
+            border-radius: 10px;
+            margin-right: 10px;
+            font-size: 1rem;
+            background-color: #1e1e2f;
+            color: #ffffff;
+        }
+
+        #message-input input[type="file"] {
+            display: none;
+        }
+
+        #upload-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #5658dd;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        #upload-btn:hover {
+            background-color: #4547bb;
+        }
+
+        #message-input button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #7289da;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        #message-input button:hover {
+            background-color: #5b6eae;
+        }
+
+        #chat-box::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 5px;
+        }
+
+        #chat-box::-webkit-scrollbar-track {
+            background-color: #2a2a4a;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="webhook-setup" class="center">
+            <h2>ويب هوك</h2>
+            <input type="text" id="webhook-url" placeholder="ادخل رابط الويب هوك هنا">
+            <button id="webhook-next-btn">التالي</button>
+        </div>
+        <div id="image-setup" class="center" style="display: none;">
+            <h2>صورة الويب هوك</h2>
+            <input type="file" id="file-input" accept="image/*, .gif">
+            <button id="upload-next-btn">التالي</button>
+        </div>
+        <div id="name-setup" class="center" style="display: none;">
+            <h2>اسم الويب هوك</h2>
+            <input type="text" id="bot-name" placeholder="ادخل اسم البوت هنا">
+            <button id="name-next-btn">التالي</button>
+        </div>
+        <div id="chat-container">
+            <div id="chat-box"></div>
+            <div id="message-input">
+                <input type="text" id="message" placeholder="مراسلة">
+                <input type="file" id="file-input-message" accept="image/*, .gif, video/*">
+                <label for="file-input-message" id="upload-btn">📎</label>
+                <button id="send-btn">ارسال</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('webhook-next-btn').addEventListener('click', () => {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            if (webhookUrl) {
+                localStorage.setItem('webhookUrl', webhookUrl);
+                document.getElementById('webhook-setup').style.display = 'none';
+                document.getElementById('image-setup').style.display = 'flex';
+            } else {
+                alert('يرجى ادخال رابط ويب هوك صحيح');
+            }
+        });
+
+        document.getElementById('upload-next-btn').addEventListener('click', () => {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageUrl = event.target.result;
+                    localStorage.setItem('imageUrl', imageUrl);
+                    document.getElementById('image-setup').style.display = 'none';
+                    document.getElementById('name-setup').style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('يرجى رفع صورة أو GIF');
+            }
+        });
+
+        document.getElementById('name-next-btn').addEventListener('click', () => {
+            const botName = document.getElementById('bot-name').value.trim();
+            if (botName) {
+                localStorage.setItem('botName', botName);
+                updateWebhookSettings();
+            } else {
+                alert('يرجى ادخال اسم البوت');
+            }
+        });
+
+        function updateWebhookSettings() {
+            const webhookUrl = localStorage.getItem('webhookUrl');
+            const botName = localStorage.getItem('botName');
+            const imageUrl = localStorage.getItem('imageUrl');
+
+            if (!webhookUrl || !botName || !imageUrl) {
+                alert('الرجاء استكمال جميع الخطوات');
+                return;
+            }
+
+            fetch(webhookUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: botName,
+                    avatar: imageUrl
+                })
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById('name-setup').style.display = 'none';
+                    document.getElementById('chat-container').style.display = 'flex';
+                } else {
+                    alert('فشل في تحديث الويب هوك');
+                }
+            }).catch(error => {
+                alert('حدث خطأ أثناء التحديث: ' + error.message);
+            });
+        }
+
+        document.getElementById('send-btn').addEventListener('click', () => {
+            sendMessage();
+        });
+
+        document.getElementById('message').addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const webhookUrl = localStorage.getItem('webhookUrl');
+            const message = document.getElementById('message').value.trim();
+            const fileInput = document.getElementById('file-input-message');
+            const file = fileInput.files[0];
+
+            if (!message && !file) {
+                alert('يرجى ادخال رسالة أو رفع ملف');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('content', message);
+            if (file) {
+                formData.append('file', file);
+            }
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    addMessageToChatBox(message, file);
+                    document.getElementById('message').value = '';
+                    fileInput.value = '';
+                } else {
+                    alert('فشل في ارسال الرسالة');
+                }
+            }).catch(error => {
+                alert('حدث خطأ أثناء الإرسال: ' + error.message);
+            });
+        }
+
+        function addMessageToChatBox(message, file) {
+            const chatBox = document.getElementById('chat-box');
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+
+            const botName = localStorage.getItem('botName');
+            const imageUrl = localStorage.getItem('imageUrl');
+
+            const avatar = document.createElement('img');
+            avatar.src = imageUrl;
+            avatar.alt = 'bot avatar';
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            let messageContent = `<strong>${botName}</strong>`;
+            if (message) {
+                messageContent += `${message}`;
+            }
+            if (file) {
+                const fileUrl = URL.createObjectURL(file);
+                if (file.type.startsWith('image/')) {
+                    messageContent += `<br><img src="${fileUrl}" alt="uploaded image" style="width: 100%; height: auto; border-radius: 10px; margin-top: 10px;">`;
+                } else if (file.type.startsWith('video/')) {
+                    messageContent += `<br><video controls style="width: 100%; height: auto; border-radius: 10px; margin-top: 10px;"><source src="${fileUrl}" type="${file.type}">Your browser does not support the video tag.</video>`;
+                } else {
+                    messageContent += `<br><a href="${fileUrl}" target="_blank" style="color: #8a85ff;">Download ${file.name}</a>`;
+                }
+            }
+
+            messageElement.innerHTML = messageContent;
+            messageContainer.appendChild(avatar);
+            messageContainer.appendChild(messageElement);
+
+            chatBox.insertBefore(messageContainer, chatBox.firstChild);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
+
